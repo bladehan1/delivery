@@ -2,7 +2,10 @@ package subspace
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -127,6 +130,7 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
+	fmt.Printf("key:%s,value:%s", string(key), hexutil.Encode(bz))
 
 	var err error
 
