@@ -130,7 +130,7 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
-	fmt.Printf("key:%s,value:%s", string(key), hexutil.Encode(bz))
+	fmt.Printf("blade 133,key:%s,value:%s", string(key), hexutil.Encode(bz))
 
 	var err error
 
