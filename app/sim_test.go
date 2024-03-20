@@ -1,11 +1,17 @@
 package app
 
 import (
+	"crypto/md5"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
+	"path"
 	"testing"
+	"unsafe"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -283,4 +289,54 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 		}
 	}
+}
+
+type UnsafeBaseApp struct {
+	logger log.Logger
+	name   string               // application name from abci.Info
+	db     dbm.DB               // common DB backend
+	cms    sdk.CommitMultiStore // Main (uncached) state
+}
+
+var (
+	externalParam string
+)
+
+func TestMain(m *testing.M) {
+	// 使用 flag 包定义外部参数
+	flag.StringVar(&externalParam, "externalParam", "defaultValue", "Description of externalParam")
+	// 解析命令行参数
+	flag.Parse()
+	// 运行测试
+	m.Run()
+}
+
+func TestKeyValue(t *testing.T) {
+	home := "/Volumes/data/1024node/deliveryd"
+	if externalParam != "defaultValue" {
+		home = externalParam
+	}
+	home = externalParam
+	dataDir := path.Join(home, "data")
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	db, err := sdk.NewLevelDB("application", dataDir)
+	if err != nil {
+		panic(err)
+	}
+
+	happ := NewHeimdallApp(logger, db)
+	chainManagerModule := "chainmanager"
+	subspace := happ.GetSubspace(chainManagerModule)
+	// ctx 从哪里获取,使用app的cms,
+	//通过unsafe包获取私有字段
+	unsafeApp := (*UnsafeBaseApp)(unsafe.Pointer(uintptr(unsafe.Pointer(happ.BaseApp))))
+	ctx := sdk.NewContext(unsafeApp.cms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
+	params := subspace.GetRaw(ctx, []byte("ParamsWithMultiChains"))
+	md5value := md5.Sum(params)
+	fmt.Printf("externalParam:%s\n", externalParam)
+	fmt.Printf("ParamsWithMultiChains:valuelen:%d,md5value:%s,value:%s\n", len(params), hexutil.Encode(md5value[:]), hexutil.Encode(params))
+}
+
+func getMultiStore() {
+
 }
