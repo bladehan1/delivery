@@ -1,6 +1,7 @@
 package subspace
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -130,8 +131,10 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
+
 	if string(key) == "ParamsWithMultiChains" {
-		fmt.Printf("blade 134,key:%s,value:%s\n", string(key), hexutil.Encode(bz))
+		md5sum := md5.Sum(bz)
+		fmt.Printf("blade 134,key:%s,valueMd5:%s\n", string(key), hexutil.Encode(md5sum[:]))
 	}
 
 	var err error
