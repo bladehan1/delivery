@@ -348,9 +348,11 @@ func TestKeyValue(t *testing.T) {
 	if err != nil {
 		t.Logf("unmarshal multiChain error %e", err)
 		unsafeSubspace := (*UnsafeSubspace)(unsafe.Pointer(uintptr(unsafe.Pointer(&subspaceChainManager))))
-		err = unsafeSubspace.cdc.UnmarshalJSON(multiChainBytes, multiChain)
+		err = unsafeSubspace.cdc.UnmarshalJSON(multiChainBytes, &multiChain)
 		if err != nil {
 			t.Fatalf("cdc unmarshal multiChain error %e", err)
+		} else {
+			fmt.Printf("cdc ParamsWithMultiChains:%s\n", multiChain)
 		}
 	} else {
 		fmt.Printf("ParamsWithMultiChains:%s\n", multiChain)
