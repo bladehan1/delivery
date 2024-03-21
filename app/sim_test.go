@@ -11,6 +11,8 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+
 	"github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/params/subspace"
 
@@ -300,6 +302,9 @@ type UnsafeBaseApp struct {
 	db     dbm.DB               // common DB backend
 	cms    sdk.CommitMultiStore // Main (uncached) state
 }
+type UnsafeSubspace struct {
+	cdc *codec.Codec
+}
 
 var (
 	externalParam string
@@ -341,7 +346,12 @@ func TestKeyValue(t *testing.T) {
 	multiChain := types.ParamsWithMultiChains{}
 	err = json.Unmarshal(multiChainBytes, &multiChain)
 	if err != nil {
-		t.Fatalf("unmarshal multiChain error %e", err)
+		t.Logf("unmarshal multiChain error %e", err)
+		unsafeSubspace := (*UnsafeSubspace)(unsafe.Pointer(uintptr(unsafe.Pointer(&subspaceChainManager))))
+		err = unsafeSubspace.cdc.UnmarshalJSON(multiChainBytes, multiChain)
+		if err != nil {
+			t.Fatalf("cdc unmarshal multiChain error %e", err)
+		}
 	} else {
 		fmt.Printf("ParamsWithMultiChains:%s\n", multiChain)
 	}
