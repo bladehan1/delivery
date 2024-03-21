@@ -11,6 +11,9 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/params/subspace"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -326,15 +329,32 @@ func TestKeyValue(t *testing.T) {
 
 	happ := NewHeimdallApp(logger, db)
 	chainManagerModule := "chainmanager"
-	subspace := happ.GetSubspace(chainManagerModule)
+	subspaceChainManager := happ.GetSubspace(chainManagerModule)
 	// ctx 从哪里获取,使用app的cms,
 	//通过unsafe包获取私有字段
 	unsafeApp := (*UnsafeBaseApp)(unsafe.Pointer(uintptr(unsafe.Pointer(happ.BaseApp))))
 	ctx := sdk.NewContext(unsafeApp.cms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
-	params := subspace.GetRaw(ctx, []byte("ParamsWithMultiChains"))
-	md5value := md5.Sum(params)
+	multiChainBytes := subspaceChainManager.GetRaw(ctx, []byte("ParamsWithMultiChains"))
+	md5value := md5.Sum(multiChainBytes)
 	fmt.Printf("externalParam:%s\n", externalParam)
-	fmt.Printf("ParamsWithMultiChains:valuelen:%d,md5value:%s,value:%s\n", len(params), hexutil.Encode(md5value[:]), hexutil.Encode(params))
+	fmt.Printf("ParamsWithMultiChains:valuelen:%d,md5value:%s,value:%s\n", len(multiChainBytes), hexutil.Encode(md5value[:]), hexutil.Encode(multiChainBytes))
+	multiChain := types.ParamsWithMultiChains{}
+	err = json.Unmarshal(multiChainBytes, &multiChain)
+	if err != nil {
+		t.Fatalf("unmarshal multiChain error %e", err)
+	} else {
+		fmt.Printf("ParamsWithMultiChains:%s\n", multiChain)
+	}
+	subspaceFeatureManager := happ.GetSubspace("featuremanager")
+	checkSupportFeature(ctx, subspaceFeatureManager)
+	checkSupportFeature(ctx, subspaceChainManager)
+
+}
+func checkSupportFeature(ctx sdk.Context, subspace subspace.Subspace) {
+	supportFeature := "SupportFeature"
+	supportFeatureByte := subspace.GetRaw(ctx, []byte(supportFeature))
+	md5Vlaue := md5.Sum(supportFeatureByte)
+	fmt.Printf("supportFeatureByte:valuelen:%d,md5value:%s,value:%s\n", len(supportFeatureByte), hexutil.Encode(md5Vlaue[:]), hexutil.Encode(supportFeatureByte))
 }
 
 func getMultiStore() {
