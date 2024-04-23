@@ -416,7 +416,7 @@ func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 		}
 
 		// if i am the proposer and NoAck is required, then propose No-Ack
-		if isProposer {
+		if isProposer || true {
 			// send Checkpoint No-Ack to heimdall
 			if err := cp.proposeCheckpointNoAck(); err != nil {
 				cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
@@ -991,9 +991,7 @@ func (cp *CheckpointProcessor) Stop() {
 	cp.cancelNoACKPolling()
 }
 
-//
 // utils
-//
 func (cp *CheckpointProcessor) getCheckpointContext(rootChain string) (*CheckpointContext, error) {
 	// fetch chain params for different root chains
 	chainmanagerParams, err := util.GetNewChainParams(cp.cliCtx, rootChain)
